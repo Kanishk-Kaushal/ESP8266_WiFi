@@ -94,14 +94,30 @@ void loop()
         analogWrite(ppwmr, mpwmr);
 
         dr = request[4]-'0';
-        digitalWrite(pdr, dr);
+        if(dr == 1)
+        {
+          digitalWrite(pdr, HIGH);
+        }
+        else
+        {
+          digitalWrite(pdr, LOW);
+        }
+        
 
         pwml = (request[5]-'0')*100 + (request[6]-'0')*10 + (request[7]-'0');
         mpwml = map(pwml, 0, 255, 0, 1024);
         analogWrite(ppwml, mpwml);
 
-         dl = request[8]-'0';
-         digitalWrite(pdl, dl);
+        dl = request[8]-'0';
+        if(dl == 1)
+        {
+          digitalWrite(pdl, HIGH);
+        }
+        else
+        {
+          digitalWrite(pdl, LOW);
+        }
+        
  
         Serial.println("PWMR");
         Serial.println(pwmr);
