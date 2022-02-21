@@ -1,19 +1,64 @@
 #include <ESP8266WiFi.h>
 
-WiFiClient client; // defines Client
-WiFiServer server(5005); // defines Server ; 5005 port number 
+// Defines Client
+WiFiClient client; 
 
+// Defines Server ; 5005 Port Number 
+WiFiServer server(5005); 
+
+// Motor Driver Pins
+int ppwmr = 5; // D1
+int ppwml = 4; // D2
+int pdr = 0;   // D3
+int pdl = 2;   // D4
+
+
+// Motor Driver Parameters
 int pwmr;
 int pwml;
 int dr;
 int dl;
 int i = 0;
 
+// Mapped PWM 
+int mpwmr;
+int mpwml;
+
+// Set your Static IP address
+IPAddress local_IP(192, 168, 1, 134);
+
+// Set your Gateway IP address
+IPAddress gateway(192, 168, 1, 1);
+
+// Set your Subnet
+IPAddress subnet(255, 255, 255, 0);
+
+// Set your Primary DNS
+IPAddress primaryDNS(8, 8, 8, 8);   //optional
+
+// Set your Secondary DNS
+IPAddress secondaryDNS(8, 8, 4, 4); //optional
+
+
 void setup()
 {
-  // put your setup code here, to run once:
+  
   Serial.begin(115200);
-  WiFi.begin("mrm@M2", "mrm@2019");
+
+  // Configuring Pins for Motor Driver
+  pinMode(ppwmr, OUTPUT);
+  pinMode(ppwml, OUTPUT);   
+  pinMode(pdr, OUTPUT);
+  pinMode(pdl, OUTPUT);
+  
+  // Configures static IP Address
+  if (!WiFi.config(local_IP, gateway, subnet, primaryDNS, secondaryDNS)) 
+  {
+    Serial.println("STA Failed to configure");
+  }
+  
+
+  WiFi.begin("mrm@M2", "");
 
   while(WiFi.status() != WL_CONNECTED)
   {
@@ -21,7 +66,6 @@ void setup()
     delay(200);
   }
 
-  Serial.println();
   Serial.println();
 
   Serial.println("Node MCU is succesfully Connected to WiFi");
@@ -35,47 +79,48 @@ void setup()
 void loop() 
 {
   client = server.available();
-   if(client == 1)
+  if(client == 1)
   {
 
-  while(1)
-  {
-  // put your main code here, to run repeatedly:
-  
-  
- 
-    String request = client.readStringUntil('e');
-   // Serial.println(request);
-    request.trim();
-    
-    if (request[0] == 'm')
+    while(1)
     {
-      pwmr = (request[1]-'0')*100 + (request[2]-'0')*10 + (request[3]-'0');
-      dr = request[4]-'0';
-      pwml = (request[5]-'0')*100 + (request[6]-'0')*10 + (request[7]-'0');
-      dl = request[8]-'0';
-      Serial.println("PWMR");
-      Serial.println(pwmr);
-      Serial.println("PWML");
-      Serial.println(pwml);
-      Serial.println("DIRR");
-      Serial.println(dr);
-      Serial.println("DIRL");
-      Serial.println(dl);
+      String request = client.readStringUntil('e');
+      request.trim();
+      
+      if (request[0] == 'm')
+      {
+        pwmr = (request[1]-'0')*100 + (request[2]-'0')*10 + (request[3]-'0');
+        mpwmr = map(pwmr, 0, 255, 0, 1024);
+        analogWrite(ppwmr, mpwmr);
 
+        dr = request[4]-'0';
+        digitalWrite(pdr, dr);
+
+        pwml = (request[5]-'0')*100 + (request[6]-'0')*10 + (request[7]-'0');
+        mpwml = map(pwml, 0, 255, 0, 1024);
+        analogWrite(ppwml, mpwml);
+
+         dl = request[8]-'0';
+         digitalWrite(pdl, dl);
+ 
+        Serial.println("PWMR");
+        Serial.println(pwmr);
+        Serial.println("PWML");
+        Serial.println(pwml);
+        Serial.println("DIRR");
+        Serial.println(dr);
+        Serial.println("DIRL");
+        Serial.println(dl);
+      }
+      
+     else if(request[9] == 'e')
+      {
+        break;
+      }
   
-
-        
     }
-   else if(request[9] == 'e')
-    {break;}
-
-   
-   
   
- }
-
-}
+  }
 }
 
 
